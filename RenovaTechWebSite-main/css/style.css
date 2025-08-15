@@ -17,7 +17,9 @@ body {
     line-height: 1.6;
     color: var(--dark-color);
     background-color: #f9f9f9;
+    
 }
+
 
 /* Navigation */
 .main-nav {
@@ -366,4 +368,32 @@ main {
   text-align: center;
   font-size: 14px;
   border-top: 1px solid #ccc;
+}
+.btn-warning-custom {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #212529; /* Cor do texto */
+    background-color: #ffc107; /* Amarelo Bootstrap */
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.btn-warning-custom:hover {
+    background-color: #e0a800; /* Amarelo mais escuro no hover */
+    transform: scale(1.05); /* Leve zoom no hover */
+}
+
+.btn-warning-custom:active {
+    background-color: #d39e00; /* Amarelo mais escuro ao clicar */
+    transform: scale(0.98); /* Efeito de clique */
+}
+.botao-centro {
+    text-align: center;
+    margin-top: 20px; /* espaço acima do botão */
 }

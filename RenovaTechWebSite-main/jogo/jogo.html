@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture a Energia - Jogo Interativo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Animação das nuvens no fundo */
+        .clouds {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            opacity: 0.6;
+            animation: float 20s infinite linear;
+        }
+
+        .cloud:before,
+        .cloud:after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+        }
+
+        .cloud1 {
+            width: 80px;
+            height: 40px;
+            top: 20%;
+            animation-duration: 25s;
+        }
+
+        .cloud2 {
+            width: 60px;
+            height: 30px;
+            top: 40%;
+            animation-duration: 30s;
+            animation-delay: -10s;
+        }
+
+        .cloud3 {
+            width: 100px;
+            height: 50px;
+            top: 60%;
+            animation-duration: 35s;
+            animation-delay: -20s;
+        }
+
+        @keyframes float {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(calc(100vw + 100px)); }
+        }
+
+        /* Container principal do jogo */
+        #game {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        /* Interface do usuário */
+        .game-ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .score {
+            background: rgba(30, 60, 114, 0.9);
+            color: #f6b93b;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-container {
+            background: rgba(30, 60, 114, 0.9);
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-bar {
+            width: 200px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .time-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f6b93b, #f39c12);
+            border-radius: 5px;
+            transition: width 0.1s ease;
+            width: 100%;
+        }
+
+        .time-text {
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Área de jogo */
+        .game-area {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Jogador (painel solar/turbina) */
+        .player {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 60px;
+            transition: all 0.1s ease;
+            z-index: 5;
+            user-select: none;
+        }
+
+        .player.happy {
+            animation: bounce 0.3s ease;
+        }
+
+        .player.sad {
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            25% { transform: translateX(-55%) translateY(0); }
+            75% { transform: translateX(-45%) translateY(0); }
+        }
+
+        /* Objetos que caem */
+        .falling-object {
+            position: absolute;
+            font-size: 40px;
+            animation: fall 4s linear;
+            user-select: none;
+            z-index: 3;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(650px);
+                opacity: 0;
+            }
+        }
+
+        /* Tela de fim de jogo */
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 60, 114, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .game-over h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #f6b93b;
+        }
+
+        .game-over p {
+            font-size: 20px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .special-message {
+            color: #f6b93b;
+            font-weight: 700;
+            font-size: 24px;
+            margin: 20px 0;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #f6b93b; }
+            to { text-shadow: 0 0 20px #f6b93b, 0 0 30px #f6b93b; }
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #f6b93b, #f39c12);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Controles móveis */
+        .mobile-controls {
+            position: absolute;
+            bottom: 100px;
+            left: 0;
+            right: 0;
+            display: none;
+            justify-content: space-between;
+            padding: 0 40px;
+            z-index: 10;
+        }
+
+        .control-btn {
+            background: rgba(30, 60, 114, 0.8);
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+            background: rgba(30, 60, 114, 1);
+        }
+
+        /* Instruções */
+        .instructions {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 14px;
+            color: #1e3c72;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            animation: fadeInOut 4s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            20%, 80% { opacity: 1; }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            #game {
+                height: 100vh;
+                max-width: 100%;
+                border-radius: 0;
+            }
+
+            .mobile-controls {
+                display: flex;
+            }
+
+            .game-ui {
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+
+            .time-container {
+                order: -1;
+            }
+
+            .time-bar {
+                width: 150px;
+            }
+
+            .instructions {
+                font-size: 12px;
+                padding: 10px 15px;
+            }
+
+            .player {
+                font-size: 50px;
+            }
+
+            .falling-object {
+                font-size: 35px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-over h2 {
+                font-size: 28px;
+            }
+
+            .game-over p {
+                font-size: 16px;
+            }
+
+            .special-message {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Nuvens animadas no fundo -->
+    <div class="clouds">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+    </div>
+
+    <!-- Container principal do jogo -->
+    <section id="game">
+        <!-- Interface do usuário -->
+        <div class="game-ui">
+            <div class="score">
+                Energia: <span id="score">0</span> kWh
+            </div>
+            <div class="time-container">
+                <div class="time-text">Tempo Restante</div>
+                <div class="time-bar">
+                    <div class="time-fill" id="timeFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instruções iniciais -->
+        <div class="instructions">
+            Use as setas ← → ou toque nos botões para capturar energia limpa! ☀️💨
+        </div>
+
+        <!-- Área principal do jogo -->
+        <div class="game-area" id="gameArea">
+            <!-- Jogador (painel solar/turbina) -->
+            <div class="player" id="player">🔋</div>
+        </div>
+
+        <!-- Controles para dispositivos móveis -->
+        <div class="mobile-controls">
+            <button class="control-btn" id="leftBtn">←</button>
+            <button class="control-btn" id="rightBtn">→</button>
+        </div>
+
+        <!-- Tela de fim de jogo -->
+        <div class="game-over" id="gameOver">
+            <h2>Fim de Jogo!</h2>
+            <p id="finalScore">Você gerou 0 kWh de energia limpa!</p>
+            <p id="specialMessage" class="special-message" style="display: none;"></p>
+            <p>Continue lutando por um futuro mais sustentável! 🌱</p>
+            <button class="restart-btn" onclick="restartGame()">Jogar Novamente</button>
+        </div>
+    </section>
+
+    <script>
+        // Variáveis do jogo
+        let gameState = {
+            score: 0,
+            timeLeft: 60,
+            gameRunning: false,
+            playerPosition: 50, // Posição em porcentagem
+            gameInterval: null,
+            spawnInterval: null,
+            timeInterval: null
+        };
+
+        // Elementos DOM
+        const player = document.getElementById('player');
+        const gameArea = document.getElementById('gameArea');
+        const scoreElement = document.getElementById('score');
+        const timeFill = document.getElementById('timeFill');
+        const gameOver = document.getElementById('gameOver');
+        const finalScore = document.getElementById('finalScore');
+        const specialMessage = document.getElementById('specialMessage');
+
+        // Tipos de objetos que podem cair
+        const objects = {
+            clean: ['☀️', '💨'], // Energia limpa (+1 ponto)
+            pollutant: ['🛢️', '🔥'] // Poluentes (-1 ponto)
+        };
+
+        // Função para criar sons usando Web Audio API
+        function createSound(frequency, duration, type = 'sine') {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // Sons do jogo
+        function playSuccessSound() {
+            createSound(523, 0.2); // Dó maior
+            setTimeout(() => createSound(659, 0.2), 100); // Mi maior
+        }
+
+        function playErrorSound() {
+            createSound(200, 0.3, 'sawtooth'); // Som grave e áspero
+        }
+
+        // Função para mover o jogador
+        function movePlayer(direction) {
+            if (!gameState.gameRunning) return;
+            
+            const moveAmount = 8;
+            if (direction === 'left' && gameState.playerPosition > 5) {
+                gameState.playerPosition -= moveAmount;
+            } else if (direction === 'right' && gameState.playerPosition < 95) {
+                gameState.playerPosition += moveAmount;
+            }
+            
+            player.style.left = gameState.playerPosition + '%';
+        }
+
+        // Controles do teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                movePlayer('left');
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                movePlayer('right');
+            }
+        });
+
+        // Controles móveis
+        document.getElementById('leftBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            movePlayer('left');
+        });
+
+        document.getElementById('rightBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            movePlayer('right');
+        });
+
+        // Função para criar objetos que caem
+        function spawnObject() {
+            if (!gameState.gameRunning) return;
+
+            const isClean = Math.random() > 0.4; // 60% chance de energia limpa
+            const objectType = isClean ? 'clean' : 'pollutant';
+            const objectArray = objects[objectType];
+            const objectEmoji = objectArray[Math.floor(Math.random() * objectArray.length)];
+            
+            const fallingObject = document.createElement('div');
+            fallingObject.className = 'falling-object';
+            fallingObject.textContent = objectEmoji;
+            fallingObject.dataset.type = objectType;
+            
+            // Posição horizontal aleatória
+            const leftPosition = Math.random() * 90 + 5; // Entre 5% e 95%
+            fallingObject.style.left = leftPosition + '%';
+            
+            gameArea.appendChild(fallingObject);
+            
+            // Verificar colisão durante a queda
+            const checkCollision = setInterval(() => {
+                const objectRect = fallingObject.getBoundingClientRect();
+                const playerRect = player.getBoundingClientRect();
+                
+                // Verificar se o objeto colidiu com o jogador
+                if (objectRect.bottom >= playerRect.top &&
+                    objectRect.top <= playerRect.bottom &&
+                    objectRect.right >= playerRect.left &&
+                    objectRect.left <= playerRect.right) {
+                    
+                    // Colisão detectada!
+                    clearInterval(checkCollision);
+                    fallingObject.remove();
+                    
+                    if (objectType === 'clean') {
+                        gameState.score++;
+                        playSuccessSound();
+                        player.className = 'player happy';
+                        setTimeout(() => player.className = 'player', 300);
+                    } else {
+                        gameState.score = Math.max(0, gameState.score - 1);
+                        playErrorSound();
+                        player.className = 'player sad';
+                        setTimeout(() => player.className = 'player', 500);
+                    }
+                    
+                    updateScore();
+                }
+                
+                // Remover objeto se saiu da tela
+                if (objectRect.top > window.innerHeight) {
+                    clearInterval(checkCollision);
+                    fallingObject.remove();
+                }
+            }, 50);
+            
+            // Remover objeto após a animação
+            setTimeout(() => {
+                if (fallingObject.parentNode) {
+                    fallingObject.remove();
+                }
+                clearInterval(checkCollision);
+            }, 4000);
+        }
+
+        // Atualizar pontuação
+        function updateScore() {
+            scoreElement.textContent = gameState.score;
+        }
+
+        // Atualizar tempo
+        function updateTime() {
+            gameState.timeLeft--;
+            const percentage = (gameState.timeLeft / 60) * 100;
+            timeFill.style.width = percentage + '%';
+            
+            if (gameState.timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        // Iniciar jogo
+        function startGame() {
+            gameState.gameRunning = true;
+            gameState.score = 0;
+            gameState.timeLeft = 60;
+            gameState.playerPosition = 50;
+            
+            // Resetar interface
+            updateScore();
+            timeFill.style.width = '100%';
+            player.style.left = '50%';
+            player.className = 'player';
+            gameOver.style.display = 'none';
+            
+            // Limpar objetos existentes
+            const existingObjects = document.querySelectorAll('.falling-object');
+            existingObjects.forEach(obj => obj.remove());
+            
+            // Iniciar intervalos do jogo
+            gameState.spawnInterval = setInterval(spawnObject, 1000); // Novo objeto a cada segundo
+            gameState.timeInterval = setInterval(updateTime, 1000); // Atualizar tempo a cada segundo
+        }
+
+        // Finalizar jogo
+        function endGame() {
+            gameState.gameRunning = false;
+            
+            // Limpar intervalos
+            clearInterval(gameState.spawnInterval);
+            clearInterval(gameState.timeInterval);
+            
+            // Mostrar tela de fim de jogo
+            finalScore.textContent = `Você gerou ${gameState.score} kWh de energia limpa!`;
+            
+            // Mensagem especial para pontuação alta
+            if (gameState.score >= 20) {
+                specialMessage.textContent = 'Você é um Guardião da Energia Limpa! 🌟';
+                specialMessage.style.display = 'block';
+            } else {
+                specialMessage.style.display = 'none';
+            }
+            
+            gameOver.style.display = 'flex';
+        }
+
+        // Reiniciar jogo
+        function restartGame() {
+            startGame();
+        }
+
+        // Iniciar o jogo automaticamente quando a página carrega
+        window.addEventListener('load', () => {
+            setTimeout(startGame, 1000); // Pequeno delay para mostrar as instruções
+        });
+
+        // Prevenir zoom em dispositivos móveis ao tocar rapidamente
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96f1f066f6f21d34',t:'MTc1NTE5MDA5OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
